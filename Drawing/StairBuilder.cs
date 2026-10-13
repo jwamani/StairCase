@@ -29,6 +29,11 @@ namespace StairCase
                 DrawBreakLine(tr, modelSpace, leaderLayer, g.LowerLandingEndX, 1);
                 DrawBreakLine(tr, modelSpace, leaderLayer, 0, -1);
 
+                ObjectId rebarLayer = LayerManager.GetOrCreate(
+                    database, tr, StairConstants.RebarLayer, StairConstants.RebarColor);
+
+                Reinforcement.Draw(tr, modelSpace, p, g, rebarLayer);
+
                 tr.Commit();
             }
         }
@@ -53,9 +58,12 @@ namespace StairCase
             points.Add(new Point2d(g.BeamStartX, g.LandingSoffitY)); // beam topleft
 
             points.Add(new Point2d(g.SoffitX(g.LandingSoffitY), g.LandingSoffitY)); // soffit top
-            // Soffit meets lower landing top (y=0). No fixed X, no vertical stub,
-            // so the soffit stays one straight line and the waist stays constant.
-            points.Add(new Point2d(g.SoffitX(0), 0)); // soffit meets lower top
+            // Small vertical rise where the soffit meets the lower top
+            // (as in the original). It stands at the thickening flat end,
+            // or further right along the soffit for a narrow thickening,
+            // one cover right of B1's leg so the bar never cuts it.
+            points.Add(new Point2d(g.RiseX, g.RiseTopY));
+            points.Add(new Point2d(g.RiseX, 0));
             points.Add(new Point2d(g.LowerLandingEndX, 0));
             points.Add(new Point2d(g.LowerLandingEndX, -45));
             points.Add(new Point2d(g.LowerLandingEndX - 35, -60));

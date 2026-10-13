@@ -53,6 +53,7 @@ namespace StairCase
         public const double LowerLandingLength = 2550;
         public const double FlightStart = 1650;
         public const double ThickeningDrop = 50;
+        public const double SoffitRiseMin = 15;
 
         public const double DonutWidth = 9.75;
         public const double DonutLength = 10.25;

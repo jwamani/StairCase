@@ -34,6 +34,13 @@ namespace StairCase
             ThickeningFlatStartX = BottomStartX + p.Chamfer;
             ThickeningFlatEndX = ThickeningFlatStartX + p.ThickeningWidth;
             ThickeningEndX = ThickeningFlatEndX + p.Chamfer;
+
+            // Small rise where the soffit meets the lower top. It stands at
+            // the thickening flat end, but slides right along the soffit if
+            // the flat no longer reaches high enough, so the face can never
+            // invert into a triangle. Always stays right of B1's leg.
+            RiseX = Math.Max(ThickeningFlatEndX, SoffitX(StairConstants.SoffitRiseMin));
+            RiseTopY = SoffitY(RiseX);
         }
 
 public double Riser;
@@ -60,6 +67,9 @@ public double Riser;
         public double ThickeningFlatEndX;
         public double ThickeningEndX;
         public double LowerLandingEndX;
+
+        public double RiseX;
+        public double RiseTopY;
 
         public double StepCornerY(double x)
         {
