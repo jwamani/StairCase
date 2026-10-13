@@ -19,12 +19,13 @@ namespace StairCase
             StartPosition = FormStartPosition.CenterScreen;
             MinimizeBox = false;
             MaximizeBox = false;
-            ClientSize = new Size(400, 430);
+            ClientSize = new Size(400, 460);
 
             string[] labels =
             {
                 "Riser height",
                 "Tread width",
+                "Number of risers",
                 "Waist thickness",
                 "Upper landing length",
                 "Upper landing thickness",
@@ -40,6 +41,7 @@ namespace StairCase
             {
                 p.Riser,
                 p.Tread,
+                p.NumRisers,
                 p.Waist,
                 p.LandingLength,
                 p.LandingThickness,
@@ -118,17 +120,24 @@ namespace StairCase
                 v[i] = parsed;
             }
 
+            if (v[2] < 2)
+            {
+                MessageBox.Show("Number of risers must be at least 2.");
+                return;
+            }
+
             _p.Riser = v[0];
             _p.Tread = v[1];
-            _p.Waist = v[2];
-            _p.LandingLength = v[3];
-            _p.LandingThickness = v[4];
-            _p.BeamWidth = v[5];
-            _p.BeamDepth = v[6];
-            _p.LowerThickness = v[7];
-            _p.ThickeningWidth = v[8];
-            _p.Chamfer = v[9];
-            _p.DonutSpacing = v[10];
+            _p.NumRisers = (int)v[2];
+            _p.Waist = v[3];
+            _p.LandingLength = v[4];
+            _p.LandingThickness = v[5];
+            _p.BeamWidth = v[6];
+            _p.BeamDepth = v[7];
+            _p.LowerThickness = v[8];
+            _p.ThickeningWidth = v[9];
+            _p.Chamfer = v[10];
+            _p.DonutSpacing = v[11];
 
             DialogResult = DialogResult.OK;
             Close();

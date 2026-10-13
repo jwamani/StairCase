@@ -9,33 +9,38 @@ namespace StairCase
             Riser = p.Riser;
             Tread = p.Tread;
             Waist = p.Waist;
+            NumRisers = p.NumRisers;
+            NumTreads = p.NumRisers - 1;
 
             StepLength = Math.Sqrt((Tread * Tread) + (Riser * Riser));
 
             SoffitDrop = Waist * StepLength / Tread;
 
+            // Fixed datums (do not change with params)
             FlightStart = StairConstants.FlightStart;
-            FlightEndX = FlightStart + (StairConstants.Treads * p.Tread);
+            LowerLandingEndX = StairConstants.LowerLandingLength;
+
+            // Dynamic flight + landing
+            FlightEndX = FlightStart + (NumTreads * p.Tread);
             LandingEndX = FlightEndX + p.LandingLength;
             BeamStartX = LandingEndX - p.BeamWidth;
 
-            LandingTopY = StairConstants.Risers * p.Riser;
+            LandingTopY = NumRisers * p.Riser;
             LandingSoffitY = LandingTopY - p.LandingThickness;
             BeamBottomY = LandingTopY - p.BeamDepth;
 
-            BottomStartX = FlightStart - 100;
+            BottomStartX = FlightStart - 100; // fixed datum at bottom
             ThickeningBottomY = -p.LowerThickness - StairConstants.ThickeningDrop;
             ThickeningFlatStartX = BottomStartX + p.Chamfer;
             ThickeningFlatEndX = ThickeningFlatStartX + p.ThickeningWidth;
-            ThickeningTopEndX = ThickeningFlatEndX - 5;
             ThickeningEndX = ThickeningFlatEndX + p.Chamfer;
-
-            LowerLandingEndX = StairConstants.LowerLandingLength;
         }
 
 public double Riser;
         public double Tread;
         public double Waist;
+        public int NumRisers;
+        public int NumTreads;
 
         public double StepLength;
         public double SoffitDrop;
@@ -53,7 +58,6 @@ public double Riser;
         public double ThickeningBottomY;
         public double ThickeningFlatStartX;
         public double ThickeningFlatEndX;
-        public double ThickeningTopEndX;
         public double ThickeningEndX;
         public double LowerLandingEndX;
 

@@ -13,5 +13,6 @@ namespace StairCase
         public double ThickeningWidth = StairConstants.ThickeningWidth;
         public double Chamfer = StairConstants.Chamfer;
         public double DonutSpacing = StairConstants.DonutSpacing;
+        public int NumRisers = StairConstants.Risers;
     }
 }
