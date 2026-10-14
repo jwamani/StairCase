@@ -86,16 +86,10 @@ namespace StairCase
             double lowPX = lowX + (cover * g.Riser / g.StepLength);
             double lowPY = lowCornerY - (cover * g.Tread / g.StepLength);
 
-            // Bend where the bottom-zone line meets the landing bottom bar level.
+            // Bend where the cover line meets the landing bottom bar level.
+            // Single sharp point, no arc.
             double yBar = g.LandingSoffitY + cover;
             double bendX = g.BarX(yBar, off);
-
-            // Bend corner pair: tangent points each side, bulge from this
-            // corner's own meeting angle (same formula as Test2's).
-            double upX = g.Tread / g.StepLength;
-            double upY = g.Riser / g.StepLength;
-            double bendTurn = Math.Atan2((upX * 0.0) - (upY * 1.0), (upX * 1.0) + (upY * 0.0));
-            double bendT = r * Math.Tan(Math.Abs(bendTurn) / 2.0);
 
             // End hook: cover from the right face, short stub up.
             double endX = g.LandingEndX - cover;
@@ -103,14 +97,13 @@ namespace StairCase
             var pts = new List<Point2d>
             {
                 new Point2d(lowPX, lowPY),
-                new Point2d(bendX - (upX * bendT), yBar - (upY * bendT)),
-                new Point2d(bendX + bendT, yBar),
+                new Point2d(bendX, yBar),
                 new Point2d(endX - r, yBar),
                 new Point2d(endX, yBar + r),
                 new Point2d(endX, yBar + (3 * cover))
             };
 
-            var bulges = new List<double> { 0, Math.Tan(bendTurn / 4.0), 0, arc, 0, 0 };
+            var bulges = new List<double> { 0, 0, arc, 0, 0 };
 
             PolylineBends(tr, ms, layer, pts, bulges);
         }
