@@ -15,39 +15,9 @@ namespace StairCase
         public const double DonutSpacing = 200;
 
         public const double BarDrop = 25;
-        public const double LowerBarRun = 1070;
-        public const double UpperBarDrop = 175;
-        public const double UpperBarRun = 3174;
-        public const double UpperBarAcross = 531;
-        public const double UpperBarTurnDown = 28;
-        public const double UpperBarTurnAcross = 27;
+        public const double CornerRadius = 15;
+        public const double KickSize = 15;
 
-        public const double FourthBarDrop = 25;
-        public const int FourthBarStep = 7;
-        public const double FourthBarBelowTop = 175;
-        public const double FourthBarRun = 1539;
-        public const double FourthBarCornerRadius = 15;
-        public const double FourthBarRise = 48;
-
-        public const double FifthBarFromStartX = 25;
-        public const double FifthBarFirstBelowTop = 100;
-        public const double FifthBarSecondBelowTop = 40;
-        public const double FifthBarThirdBelowTop = 25;
-        public const double FifthBarThirdFromStartX = 40;
-
-        public const double FifthBarCornerRadius = 15;
-        public const double FifthBarFifthBelowTop = 40;
-        public const double FifthBarLastDrop = 49;
-
-        public const double MiddleBarDrop = 15;
-        public const double MiddleBarStartBack = 1011;
-        public const double MiddleBarAcross = 6.8;
-        public const double MiddleBarTurnDown = 1.7;
-        public const double MiddleBarRunAlong = 758;
-        public const double MiddleBarStepAcross = 15;
-        public const double MiddleBarStepDown = 15;
-
-        public const int Treads = 10;
         public const int Risers = 11;
 
         public const double LowerLandingLength = 2550;
@@ -58,8 +28,6 @@ namespace StairCase
         public const double DonutWidth = 9.75;
         public const double DonutLength = 10.25;
         public const double DonutOffset = 15;
-        public const double HalfDiagonal = 0.7071;
-        public const double DonutTurnCos = 0.9848078;
 
         public const double DimOffset = 200;
         public const double DimArrow = 25;
@@ -70,13 +38,11 @@ namespace StairCase
 
         public const string ViewPortLayer = "View Port";
         public const string HatchLayer = "Conc Hatch";
-        public const string BeamLayer = "Beam";
         public const string RebarLayer = "Reinforcement";
         public const string LeaderLayer = "Leader";
 
         public const short ViewPortColor = 6;
         public const short HatchColor = 9;
-        public const short BeamColor = 6;
         public const short RebarColor = 5;
         public const short LeaderColor = 1;
     }

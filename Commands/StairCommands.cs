@@ -1,5 +1,6 @@
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
 
 namespace StairCase
@@ -24,7 +25,14 @@ namespace StairCase
 
             try
             {
-                StairBuilder.Build(doc.Database, p);
+                var pr = doc.Editor.GetPoint(new PromptPointOptions("\nSelect insertion point: "));
+
+                if (pr.Status != PromptStatus.OK)
+                {
+                    return;
+                }
+
+                StairBuilder.Build(doc.Database, p, pr.Value);
             }
             catch (System.Exception exception)
             {

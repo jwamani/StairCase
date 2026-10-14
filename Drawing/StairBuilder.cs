@@ -7,9 +7,10 @@ namespace StairCase
 {
     public static class StairBuilder
     {
-        public static void Build(Database database, StairParams p)
+        public static void Build(Database database, StairParams p, Point3d ins)
         {
             StairGeometry g = new StairGeometry(p);
+            Point2d o = new Point2d(ins.X, ins.Y);
 
             using (Transaction tr = database.TransactionManager.StartTransaction())
             {
@@ -18,27 +19,38 @@ namespace StairCase
                     blockTable[BlockTableRecord.ModelSpace],
                     OpenMode.ForWrite);
 
+                ObjectId hatchLayer = LayerManager.GetOrCreate(
+                    database, tr, StairConstants.HatchLayer, StairConstants.HatchColor);
+
+                ObjectId hatch = CreateHatch(tr, modelSpace, hatchLayer);
+
                 ObjectId layer = LayerManager.GetOrCreate(
                     database, tr, StairConstants.ViewPortLayer, StairConstants.ViewPortColor);
 
-                DrawOutline(tr, modelSpace, layer, p, g);
+                ObjectId outline = DrawOutline(tr, modelSpace, layer, p, g, o);
+
+                FillHatch(tr, hatch, outline);
 
                 ObjectId leaderLayer = LayerManager.GetOrCreate(
                     database, tr, StairConstants.LeaderLayer, StairConstants.LeaderColor);
 
-                DrawBreakLine(tr, modelSpace, leaderLayer, g.LowerLandingEndX, 1);
-                DrawBreakLine(tr, modelSpace, leaderLayer, 0, -1);
+                DrawBreakLine(tr, modelSpace, leaderLayer, g.LowerLandingEndX, 1, o);
+                DrawBreakLine(tr, modelSpace, leaderLayer, 0, -1, o);
 
                 ObjectId rebarLayer = LayerManager.GetOrCreate(
                     database, tr, StairConstants.RebarLayer, StairConstants.RebarColor);
 
-                Reinforcement.Draw(tr, modelSpace, p, g, rebarLayer);
+                Reinforcement.Draw(tr, modelSpace, p, g, rebarLayer, o);
+
+                LayerTable layers = (LayerTable)tr.GetObject(database.LayerTableId, OpenMode.ForRead);
+
+                Dimensions.Draw(tr, database, modelSpace, p, g, layers["0"], o);
 
                 tr.Commit();
             }
         }
 
-        static void DrawOutline(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g)
+        static ObjectId DrawOutline(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g, Point2d o)
         {
             var points = new List<Point2d>();
 
@@ -76,6 +88,11 @@ namespace StairCase
             points.Add(new Point2d(35, -60));
             points.Add(new Point2d(0, -45));
 
+            for (int i = 0; i < points.Count; i++)
+            {
+                points[i] = new Point2d(points[i].X + o.X, points[i].Y + o.Y);
+            }
+
             var polyline = new Polyline();
 
             foreach (Point2d point in points)
@@ -89,9 +106,11 @@ namespace StairCase
 
             ms.AppendEntity(polyline);
             tr.AddNewlyCreatedDBObject(polyline, true);
+
+            return polyline.ObjectId;
         }
 
-        static void DrawBreakLine(Transaction tr, BlockTableRecord ms, ObjectId layer, double x, double swing)
+        static void DrawBreakLine(Transaction tr, BlockTableRecord ms, ObjectId layer, double x, double swing, Point2d o)
         {
             double reach = 35 * swing;
 
@@ -105,6 +124,11 @@ namespace StairCase
                 new Point2d(x, -190)
             };
 
+            for (int i = 0; i < points.Count; i++)
+            {
+                points[i] = new Point2d(points[i].X + o.X, points[i].Y + o.Y);
+            }
+
             var polyline = new Polyline();
 
             foreach (Point2d point in points)
@@ -117,6 +141,34 @@ namespace StairCase
 
             ms.AppendEntity(polyline);
             tr.AddNewlyCreatedDBObject(polyline, true);
+        }
+
+        static ObjectId CreateHatch(Transaction tr, BlockTableRecord ms, ObjectId layer)
+        {
+            Hatch hatch = new Hatch();
+
+            hatch.SetDatabaseDefaults();
+
+            hatch.LayerId = layer;
+            hatch.Color = Color.FromColorIndex(ColorMethod.ByLayer, 256);
+
+            hatch.SetHatchPattern(HatchPatternType.PreDefined, StairConstants.HatchPattern);
+            hatch.Associative = false;
+
+            ms.AppendEntity(hatch);
+            tr.AddNewlyCreatedDBObject(hatch, true);
+
+            return hatch.ObjectId;
+        }
+
+        static void FillHatch(Transaction tr, ObjectId hatch, ObjectId outline)
+        {
+            Hatch entity = (Hatch)tr.GetObject(hatch, OpenMode.ForWrite);
+
+            var boundary = new ObjectIdCollection { outline };
+
+            entity.AppendLoop(HatchLoopTypes.Default, boundary);
+            entity.EvaluateHatch(true);
         }
     }
 }

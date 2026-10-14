@@ -25,7 +25,7 @@ namespace StairCase
             {
                 "Riser height",
                 "Tread width",
-                "Number of risers",
+                "Number of steps (risers)",
                 "Waist thickness",
                 "Upper landing length",
                 "Upper landing thickness",
