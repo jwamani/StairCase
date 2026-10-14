@@ -16,11 +16,9 @@ namespace StairCase
 
             SoffitDrop = Waist * StepLength / Tread;
 
-            // Fixed datums (do not change with params)
             FlightStart = StairConstants.FlightStart;
             LowerLandingEndX = StairConstants.LowerLandingLength;
 
-            // Dynamic flight + landing
             FlightEndX = FlightStart + (NumTreads * p.Tread);
             LandingEndX = FlightEndX + p.LandingLength;
             BeamStartX = LandingEndX - p.BeamWidth;
@@ -29,16 +27,12 @@ namespace StairCase
             LandingSoffitY = LandingTopY - p.LandingThickness;
             BeamBottomY = LandingTopY - p.BeamDepth;
 
-            BottomStartX = FlightStart - 100; // fixed datum at bottom
+            BottomStartX = FlightStart - 100;
             ThickeningBottomY = -p.LowerThickness - StairConstants.ThickeningDrop;
             ThickeningFlatStartX = BottomStartX + p.Chamfer;
             ThickeningFlatEndX = ThickeningFlatStartX + p.ThickeningWidth;
             ThickeningEndX = ThickeningFlatEndX + p.Chamfer;
 
-            // Small rise where the soffit meets the lower top. It stands at
-            // the thickening flat end, but slides right along the soffit if
-            // the flat no longer reaches high enough, so the face can never
-            // invert into a triangle. Always stays right of B1's leg.
             RiseX = Math.Max(ThickeningFlatEndX, SoffitX(StairConstants.SoffitRiseMin));
             RiseTopY = SoffitY(RiseX);
         }

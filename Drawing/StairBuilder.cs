@@ -58,10 +58,6 @@ namespace StairCase
             points.Add(new Point2d(g.BeamStartX, g.LandingSoffitY)); // beam topleft
 
             points.Add(new Point2d(g.SoffitX(g.LandingSoffitY), g.LandingSoffitY)); // soffit top
-            // Small vertical rise where the soffit meets the lower top
-            // (as in the original). It stands at the thickening flat end,
-            // or further right along the soffit for a narrow thickening,
-            // one cover right of B1's leg so the bar never cuts it.
             points.Add(new Point2d(g.RiseX, g.RiseTopY));
             points.Add(new Point2d(g.RiseX, 0));
             points.Add(new Point2d(g.LowerLandingEndX, 0));

@@ -8,46 +8,39 @@ namespace StairCase
 {
     public static class Reinforcement
     {
-        // Bars are drawn one at a time. B1, B2 done, B3..B5 follow.
         public static void Draw(Transaction tr, BlockTableRecord modelSpace, StairParams p, StairGeometry g, ObjectId layer)
         {
             DrawB1(tr, modelSpace, p, g, layer);
             DrawB2(tr, modelSpace, p, g, layer);
+            DrawB3(tr, modelSpace, p, g, layer);
+            DrawB4(tr, modelSpace, p, g, layer);
+            DrawB5(tr, modelSpace, p, g, layer);
+            DrawLandingDonuts(tr, modelSpace, layer, p, g);
+            DrawFlightDonuts(tr, modelSpace, layer, p, g);
         }
 
-        // B1: lower main bar. Diagonal on the cover-25 line from the 0.3
-        // step-count corner down into the slab, then a U in the thickening
-        // whose right leg meets the bottom-zone bar (cover 25 above soffit).
-        // Corners use the Test2 pattern: short two-point jog + fixed bulge.
         static void DrawB1(Transaction tr, BlockTableRecord ms, StairParams p, StairGeometry g, ObjectId layer)
         {
-            double cover = StairConstants.BarDrop; // 25
-            double arc = Math.Tan(22.5 * Math.PI / 180.0); // Test2 corner bulge (90 degree turn)
-            double r = StairConstants.FourthBarCornerRadius; // 15
+            double cover = StairConstants.BarDrop;
+            double arc = Math.Tan(22.5 * Math.PI / 180.0);
+            double r = StairConstants.FourthBarCornerRadius;
 
-            // Top end: perpendicular from the 0.3 step-count corner, cover below it.
             int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
             double topX = g.FlightStart + (kLow * g.Tread);
             double topCornerY = kLow * g.Riser;
             double topPX = topX + (cover * g.Riser / g.StepLength);
             double topPY = topCornerY - (cover * g.Tread / g.StepLength);
 
-            // Left leg drops at riser face minus 40.
             double legX = g.FlightStart - 40;
 
-            // Foot corner pair: tangent points each side of the foot, bulge
-            // from the same formula with this corner's own meeting angle.
             double footY = g.BarY(legX, cover);
             double inX = -g.Tread / g.StepLength;
             double inY = -g.Riser / g.StepLength;
             double footTurn = Math.Atan2((inX * -1.0) - (inY * 0.0), (inX * 0.0) + (inY * -1.0));
             double footT = r * Math.Tan(Math.Abs(footTurn) / 2.0);
 
-            // Bottom bar 25 above thickening bottom.
             double yBot = g.ThickeningBottomY + cover;
 
-            // Right leg: cover left of thickening flat end, top past the
-            // crossing with the bottom-zone bar by a short stub.
             double upX = g.ThickeningFlatEndX - cover;
             double crossY = g.BarY(upX, g.Waist - cover);
 
@@ -68,17 +61,12 @@ namespace StairCase
             PolylineBends(tr, ms, layer, pts, bulges);
         }
 
-        // B2: upper main bar. Diagonal on the cover line (same as B1) from
-        // the 0.3 step-count point below the top, up to a bend, then
-        // horizontal at soffit+25 to near the beam end with a short up-hook.
         static void DrawB2(Transaction tr, BlockTableRecord ms, StairParams p, StairGeometry g, ObjectId layer)
         {
-            double cover = StairConstants.BarDrop; // 25
-            double arc = Math.Tan(22.5 * Math.PI / 180.0); // Test2 corner bulge (90 degree turn)
-            double r = StairConstants.FourthBarCornerRadius; // 15
+            double cover = StairConstants.BarDrop;
+            double arc = Math.Tan(22.5 * Math.PI / 180.0);
+            double r = StairConstants.FourthBarCornerRadius;
 
-            // Bottom end: perpendicular from its step corner, cover below it.
-            // The diagonal rides the same cover line as B1 up to the bend.
             int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
             double lowX = g.FlightStart + ((g.NumTreads - kLow) * g.Tread);
             double off = cover;
@@ -86,12 +74,9 @@ namespace StairCase
             double lowPX = lowX + (cover * g.Riser / g.StepLength);
             double lowPY = lowCornerY - (cover * g.Tread / g.StepLength);
 
-            // Bend where the cover line meets the landing bottom bar level.
-            // Single sharp point, no arc.
             double yBar = g.LandingSoffitY + cover;
             double bendX = g.BarX(yBar, off);
 
-            // End hook: cover from the right face, short stub up.
             double endX = g.LandingEndX - cover;
 
             var pts = new List<Point2d>
@@ -100,10 +85,99 @@ namespace StairCase
                 new Point2d(bendX, yBar),
                 new Point2d(endX - r, yBar),
                 new Point2d(endX, yBar + r),
-                new Point2d(endX, yBar + (3 * cover))
+                new Point2d(endX, yBar + (2 * cover))
             };
 
             var bulges = new List<double> { 0, 0, arc, 0, 0 };
+
+            PolylineBends(tr, ms, layer, pts, bulges);
+        }
+
+        static void DrawB3(Transaction tr, BlockTableRecord ms, StairParams p, StairGeometry g, ObjectId layer)
+        {
+            double cover = StairConstants.BarDrop;
+            double off = 0.6 * cover;
+            double arc = Math.Tan(22.5 * Math.PI / 180.0);
+            double kick = StairConstants.MiddleBarDrop;
+
+            int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
+            double lowX = g.FlightStart + ((g.NumTreads - kLow + 0.6) * g.Tread);
+            double lowCornerY = g.StepCornerY(lowX);
+
+            double tailY = g.LandingTopY - cover;
+            double bendX = g.BarX(tailY, off);
+
+            double tailX = bendX + (0.48 * p.LandingLength);
+
+            var pts = new List<Point2d>
+            {
+                new Point2d(
+                    lowX + (off * g.Riser / g.StepLength),
+                    lowCornerY - (off * g.Tread / g.StepLength)),
+                new Point2d(bendX, tailY),
+                new Point2d(tailX, tailY),
+                new Point2d(tailX + kick, tailY - kick)
+            };
+
+            var bulges = new List<double> { 0, 0, -arc, 0 };
+
+            PolylineBends(tr, ms, layer, pts, bulges);
+        }
+
+        static void DrawB4(Transaction tr, BlockTableRecord ms, StairParams p, StairGeometry g, ObjectId layer)
+        {
+            double cover = StairConstants.BarDrop;
+            double off = g.Waist - cover;
+
+            double tailY = g.LandingTopY - cover;
+            double bendX = g.BarX(tailY, off);
+            double tailEndX = bendX + (0.3 * p.LandingLength);
+
+            double upX = g.ThickeningFlatEndX - cover;
+            double crossY = g.BarY(upX, off);
+            double stub = 3 * cover;
+            double kick = StairConstants.MiddleBarDrop;
+            double endX = upX - (stub * g.Tread / g.StepLength);
+            double endY = crossY - (stub * g.Riser / g.StepLength);
+
+            double tailKickX = tailEndX + kick;
+            double tailKickY = tailY - kick;
+
+            var pts = new List<Point2d>
+            {
+                new Point2d(tailKickX, tailKickY),
+                new Point2d(tailEndX, tailY),
+                new Point2d(bendX, tailY),
+                new Point2d(endX, endY)
+            };
+
+            var bulges = new List<double> { 0, 0, 0, 0 };
+
+            PolylineBends(tr, ms, layer, pts, bulges);
+        }
+
+        static void DrawB5(Transaction tr, BlockTableRecord ms, StairParams p, StairGeometry g, ObjectId layer)
+        {
+            double cover = StairConstants.BarDrop;
+            double arc = Math.Tan(22.5 * Math.PI / 180.0);
+            double r = StairConstants.FourthBarCornerRadius;
+            double hook = 2 * cover;
+
+            double barY = g.LandingTopY - cover;
+            double leftX = g.FlightEndX + cover;
+            double rightX = g.LandingEndX - cover;
+
+            var pts = new List<Point2d>
+            {
+                new Point2d(leftX, barY - hook),
+                new Point2d(leftX, barY - r),
+                new Point2d(leftX + r, barY),
+                new Point2d(rightX - r, barY),
+                new Point2d(rightX, barY - r),
+                new Point2d(rightX, barY - hook)
+            };
+
+            var bulges = new List<double> { 0, -arc, 0, -arc, 0, 0 };
 
             PolylineBends(tr, ms, layer, pts, bulges);
         }
@@ -191,46 +265,50 @@ namespace StairCase
 
         static void DrawLandingDonuts(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g)
         {
-            double topY = g.LandingTopY - StairConstants.FifthBarThirdBelowTop;
-            double bottomY = g.LandingSoffitY + StairConstants.BarDrop;
+            double cover = StairConstants.BarDrop;
+            double r = StairConstants.FourthBarCornerRadius;
+            double off = StairConstants.DonutOffset;
 
-            double startX = g.FlightEndX + StairConstants.FifthBarThirdFromStartX;
-            double endX = FourthBarThirdX(g);
+            double firstX = g.FlightEndX + cover + r;
+            double lastX = g.BeamStartX - cover;
+            double topY = g.LandingTopY - cover - off;
+            double botY = g.LandingSoffitY + cover + off;
 
-            double length = endX - startX;
+            int n = Math.Max(2, (int)Math.Ceiling((lastX - firstX) / p.DonutSpacing) + 1);
+            double s = (lastX - firstX) / (n - 1);
 
-            double secondY = topY - StairConstants.MiddleBarTurnDown;
-            double secondX = g.BarX(secondY, StairConstants.MiddleBarDrop);
-            double middleFirstX = secondX - StairConstants.MiddleBarStartBack;
-            double middleFirstY = g.BarY(middleFirstX, StairConstants.MiddleBarDrop);
-
-            double ux = secondX - middleFirstX;
-            double uy = secondY - middleFirstY;
-            double ul = Math.Sqrt((ux * ux) + (uy * uy));
-
-            ux = ux / ul;
-            uy = uy / ul;
-
-            double donutY = bottomY + StairConstants.DonutOffset;
-
-            double crossX = middleFirstX + (((donutY - middleFirstY) * ux) / uy);
-
-            double first = startX;
-            double push = StairConstants.DonutOffset / uy;
-
-            if (first < crossX + push)
+            for (int i = 0; i < n; i++)
             {
-                first = crossX + push;
+                double x = firstX + (i * s);
+                Donut(tr, ms, layer, x, topY);
+                Donut(tr, ms, layer, x, botY);
             }
+        }
 
-            for (double x = startX + p.DonutSpacing; x < endX; x += p.DonutSpacing)
+        static void DrawFlightDonuts(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g)
+        {
+            double cover = StairConstants.BarDrop;
+            double off = StairConstants.DonutOffset;
+            double zone = g.Waist - cover;
+
+            double x0 = g.ThickeningFlatEndX - cover - off + (off * g.Riser / g.StepLength);
+            double y0 = g.BarY(x0, zone);
+            double x1 = g.BarX(g.LandingSoffitY, zone);
+            double y1 = g.BarY(x1, zone);
+
+            double run = Math.Sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
+            int n = Math.Max(2, (int)Math.Ceiling(run / p.Tread) + 1);
+
+            for (int i = 0; i < n; i++)
             {
-                Donut(tr, ms, layer, x, topY - StairConstants.DonutOffset);
-                Donut(tr, ms, layer, x, donutY);
-            }
+                double t = (double)i / (n - 1);
+                double x = x0 + ((x1 - x0) * t);
+                double y = y0 + ((y1 - y0) * t);
 
-            Donut(tr, ms, layer, first, topY - StairConstants.DonutOffset);
-            Donut(tr, ms, layer, first, donutY);
+                Donut(tr, ms, layer,
+                    x - (off * g.Riser / g.StepLength),
+                    y + (off * g.Tread / g.StepLength));
+            }
         }
 
         static void DrawLowerBar(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g)
