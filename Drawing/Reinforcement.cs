@@ -16,7 +16,6 @@ namespace StairCase
             DrawB4(tr, modelSpace, p, g, layer, o);
             DrawB5(tr, modelSpace, p, g, layer, o);
             DrawLandingDonuts(tr, modelSpace, layer, p, g, o);
-            DrawFlightDonuts(tr, modelSpace, layer, p, g, o);
             DrawB1Donuts(tr, modelSpace, layer, p, g, o);
             DrawB2Donuts(tr, modelSpace, layer, p, g, o);
         }
@@ -27,7 +26,7 @@ namespace StairCase
             double arc = Math.Tan(22.5 * Math.PI / 180.0);
             double r = StairConstants.CornerRadius;
 
-            int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
+            int kLow = Math.Max(1, (int)Math.Round(g.NumTreads / 3.0));
             double topX = g.FlightStart + (kLow * g.Tread);
             double topCornerY = kLow * g.Riser;
             double topPX = topX + (cover * g.Riser / g.StepLength);
@@ -69,7 +68,7 @@ namespace StairCase
             double arc = Math.Tan(22.5 * Math.PI / 180.0);
             double r = StairConstants.CornerRadius;
 
-            int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
+            int kLow = Math.Max(1, (int)Math.Round(g.NumTreads / 3.0));
             double lowX = g.FlightStart + ((g.NumTreads - kLow) * g.Tread);
             double off = cover;
             double lowCornerY = (g.NumTreads - kLow) * g.Riser;
@@ -80,6 +79,7 @@ namespace StairCase
             double bendX = g.BarX(yBar, off);
 
             double endX = g.LandingEndX - cover;
+            double hook = p.LandingThickness / 4;
 
             var pts = new List<Point2d>
             {
@@ -87,7 +87,7 @@ namespace StairCase
                 new Point2d(bendX, yBar),
                 new Point2d(endX - r, yBar),
                 new Point2d(endX, yBar + r),
-                new Point2d(endX, yBar + (2 * cover))
+                new Point2d(endX, yBar + hook)
             };
 
             var bulges = new List<double> { 0, 0, arc, 0, 0 };
@@ -102,7 +102,7 @@ namespace StairCase
             double arc = Math.Tan(22.5 * Math.PI / 180.0);
             double kick = StairConstants.KickSize;
 
-            int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
+            int kLow = Math.Max(1, (int)Math.Round(g.NumTreads / 3.0));
             double lowX = g.FlightStart + ((g.NumTreads - kLow + 0.6) * g.Tread);
             double lowCornerY = g.StepCornerY(lowX);
 
@@ -163,7 +163,7 @@ namespace StairCase
             double cover = StairConstants.BarDrop;
             double arc = Math.Tan(22.5 * Math.PI / 180.0);
             double r = StairConstants.CornerRadius;
-            double hook = 2 * cover;
+            double hook = p.LandingThickness / 4;
 
             double barY = g.LandingTopY - cover;
             double leftX = g.FlightEndX + cover;
@@ -206,32 +206,6 @@ namespace StairCase
             }
         }
 
-        static void DrawFlightDonuts(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g, Point2d o)
-        {
-            double cover = StairConstants.BarDrop;
-            double off = StairConstants.DonutOffset;
-            double zone = g.Waist - cover;
-
-            double x0 = g.ThickeningFlatEndX - cover - off + (off * g.Riser / g.StepLength);
-            double y0 = g.BarY(x0, zone);
-            double x1 = g.BarX(g.LandingSoffitY, zone);
-            double y1 = g.BarY(x1, zone);
-
-            double run = Math.Sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
-            int n = Math.Max(2, (int)Math.Ceiling(run / p.Tread) + 1);
-
-            for (int i = 0; i < n; i++)
-            {
-                double t = (double)i / (n - 1);
-                double x = x0 + ((x1 - x0) * t);
-                double y = y0 + ((y1 - y0) * t);
-
-                Donut(tr, ms, layer,
-                    x - (off * g.Riser / g.StepLength),
-                    y + (off * g.Tread / g.StepLength), o);
-            }
-        }
-
         static void DrawB1Donuts(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g, Point2d o)
         {
             double cover = StairConstants.BarDrop;
@@ -239,17 +213,18 @@ namespace StairCase
             double ux = g.Tread / g.StepLength;
             double uy = g.Riser / g.StepLength;
 
-            int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
+            int kLow = Math.Max(1, (int)Math.Round(g.NumTreads / 3.0));
             double cx = g.FlightStart + (kLow * g.Tread);
             double px = cx + (cover * g.Riser / g.StepLength);
             double py = (kLow * g.Riser) - (cover * g.Tread / g.StepLength);
 
+            Donut(tr, ms, layer,
+                px + (off * g.Riser / g.StepLength),
+                py - (off * g.Tread / g.StepLength), o);
+
             double legX = g.FlightStart - 40;
             double qx = legX;
             double qy = g.BarY(legX, cover);
-
-            double x0 = px - (cover * ux);
-            double y0 = py - (cover * uy);
 
             double dot = (ux * 0.0) + (uy * -1.0);
             double sinHalf = Math.Sqrt((1.0 - dot) / 2.0);
@@ -260,20 +235,6 @@ namespace StairCase
             double endX = qx + (bd * bx / bl);
             double endY = qy + (bd * by / bl);
 
-            double run = Math.Sqrt(((qx - x0) * (qx - x0)) + ((qy - y0) * (qy - y0)));
-            int n = Math.Max(2, (int)Math.Ceiling(run / p.Tread) + 1);
-
-            for (int i = 0; i < n - 1; i++)
-            {
-                double t = (double)i / (n - 1);
-                double x = x0 + ((qx - x0) * t);
-                double y = y0 + ((qy - y0) * t);
-
-                Donut(tr, ms, layer,
-                    x + (off * g.Riser / g.StepLength),
-                    y - (off * g.Tread / g.StepLength), o);
-            }
-
             Donut(tr, ms, layer, endX, endY, o);
 
             double r = StairConstants.CornerRadius;
@@ -283,6 +244,72 @@ namespace StairCase
             Donut(tr, ms, layer, legX + r, yBot + r, o);
             Donut(tr, ms, layer, (legX + upX) / 2, yBot + r, o);
             Donut(tr, ms, layer, upX - r, yBot + r, o);
+
+            double zone = g.Waist - cover;
+            double ix0 = g.ThickeningFlatEndX - cover - off + (off * g.Riser / g.StepLength);
+            double iy0 = g.BarY(ix0, zone);
+            double ix = ix0 - (off * g.Riser / g.StepLength);
+            double iy = iy0 + (off * g.Tread / g.StepLength);
+
+            double t = ((ix - px) * ux) + ((iy - py) * uy);
+            double footX = px + (t * ux);
+            double footY = py + (t * uy);
+
+            Donut(tr, ms, layer,
+                footX + (off * g.Riser / g.StepLength),
+                footY - (off * g.Tread / g.StepLength), o);
+
+            double zone1X = footX + (off * g.Riser / g.StepLength);
+            double zone1Y = footY - (off * g.Tread / g.StepLength);
+            double zone1Dist = Math.Sqrt(((endX - zone1X) * (endX - zone1X)) + ((endY - zone1Y) * (endY - zone1Y)));
+            int zone1N = Math.Max(2, (int)Math.Ceiling(zone1Dist / p.DonutSpacing) + 1);
+
+            for (int i = 1; i < zone1N - 1; i++)
+            {
+                double u = (double)i / (zone1N - 1);
+                Donut(tr, ms, layer,
+                    zone1X + ((endX - zone1X) * u),
+                    zone1Y + ((endY - zone1Y) * u), o);
+            }
+
+            double zone2X = px + (off * g.Riser / g.StepLength);
+            double zone2Y = py - (off * g.Tread / g.StepLength);
+            double zone2Dist = Math.Sqrt(
+                ((zone1X - zone2X) * (zone1X - zone2X)) +
+                ((zone1Y - zone2Y) * (zone1Y - zone2Y)));
+            int zone2N = Math.Max(2, (int)Math.Ceiling(zone2Dist / p.DonutSpacing) + 1);
+
+            for (int i = 1; i < zone2N - 1; i++)
+            {
+                double u = (double)i / (zone2N - 1);
+                Donut(tr, ms, layer,
+                    zone2X + ((zone1X - zone2X) * u),
+                    zone2Y + ((zone1Y - zone2Y) * u), o);
+            }
+
+            double drop = g.Waist - (2 * cover) - (2 * off);
+            double dropX = drop * g.Riser / g.StepLength;
+            double dropY = -drop * g.Tread / g.StepLength;
+
+            double sepPairX = zone1X + dropX;
+            double sepPairY = zone1Y + dropY;
+            double b1PairX = zone2X + dropX;
+            double b1PairY = zone2Y + dropY;
+
+            Donut(tr, ms, layer, sepPairX, sepPairY, o);
+
+            double botDist = Math.Sqrt(
+                ((b1PairX - sepPairX) * (b1PairX - sepPairX)) +
+                ((b1PairY - sepPairY) * (b1PairY - sepPairY)));
+            int botN = Math.Max(2, (int)Math.Ceiling(botDist / p.DonutSpacing) + 1);
+
+            for (int i = 1; i < botN - 1; i++)
+            {
+                double u = (double)i / (botN - 1);
+                Donut(tr, ms, layer,
+                    sepPairX + ((b1PairX - sepPairX) * u),
+                    sepPairY + ((b1PairY - sepPairY) * u), o);
+            }
         }
         static void DrawB2Donuts(Transaction tr, BlockTableRecord ms, ObjectId layer, StairParams p, StairGeometry g, Point2d o)
         {
@@ -291,29 +318,88 @@ namespace StairCase
             double ux = g.Tread / g.StepLength;
             double uy = g.Riser / g.StepLength;
 
-            int kLow = Math.Max(1, (int)Math.Round(0.3 * g.NumTreads));
+            int kLow = Math.Max(1, (int)Math.Round(g.NumTreads / 3.0));
             double lowX = g.FlightStart + ((g.NumTreads - kLow) * g.Tread);
             double lowCornerY = (g.NumTreads - kLow) * g.Riser;
             double x0 = lowX + (cover * g.Riser / g.StepLength);
             double y0 = lowCornerY - (cover * g.Tread / g.StepLength);
 
+            double b1StartX = g.FlightStart + (kLow * g.Tread) + (cover * g.Riser / g.StepLength) + (off * g.Riser / g.StepLength);
+            double b1StartY = (kLow * g.Riser) - (cover * g.Tread / g.StepLength) - (off * g.Tread / g.StepLength);
+            double b2StartX = x0 + (off * g.Riser / g.StepLength);
+            double b2StartY = y0 - (off * g.Tread / g.StepLength);
+
+            double drop = g.Waist - (2 * cover) - (2 * off);
+            double dropX = drop * g.Riser / g.StepLength;
+            double dropY = -drop * g.Tread / g.StepLength;
+
+            double b1PairX = b1StartX + dropX;
+            double b1PairY = b1StartY + dropY;
+            double b2PairX = b2StartX + dropX;
+            double b2PairY = b2StartY + dropY;
+
+            double zone3Dist = Math.Sqrt(
+                ((b2PairX - b1PairX) * (b2PairX - b1PairX)) +
+                ((b2PairY - b1PairY) * (b2PairY - b1PairY)));
+            int zone3N = Math.Max(2, (int)Math.Ceiling(zone3Dist / p.DonutSpacing) + 1);
+
+            for (int i = 0; i < zone3N; i++)
+            {
+                double u = (double)i / (zone3N - 1);
+                Donut(tr, ms, layer,
+                    b1PairX + ((b2PairX - b1PairX) * u),
+                    b1PairY + ((b2PairY - b1PairY) * u), o);
+            }
+
             double yBar = g.LandingSoffitY + cover;
             double x1 = g.BarX(yBar, cover) - (cover * ux);
             double y1 = yBar - (cover * uy);
 
-            double run = Math.Sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
-            int n = Math.Max(2, (int)Math.Ceiling(run / p.Tread) + 1);
+            double topEndX = x1 + (off * g.Riser / g.StepLength);
+            double topEndY = y1 - (off * g.Tread / g.StepLength);
+            double bendPairX = topEndX + dropX;
+            double bendPairY = topEndY + dropY;
 
-            for (int i = 0; i < n; i++)
+            double zone4Dist = Math.Sqrt(
+                ((topEndX - b2StartX) * (topEndX - b2StartX)) +
+                ((topEndY - b2StartY) * (topEndY - b2StartY)));
+            int zone4N = Math.Max(2, (int)Math.Ceiling(zone4Dist / p.DonutSpacing) + 1);
+
+            for (int i = 0; i < zone4N; i++)
             {
-                double t = (double)i / (n - 1);
-                double x = x0 + ((x1 - x0) * t);
-                double y = y0 + ((y1 - y0) * t);
-
+                double u = (double)i / (zone4N - 1);
                 Donut(tr, ms, layer,
-                    x + (off * g.Riser / g.StepLength),
-                    y - (off * g.Tread / g.StepLength), o);
+                    b2StartX + ((topEndX - b2StartX) * u),
+                    b2StartY + ((topEndY - b2StartY) * u), o);
             }
+
+            for (int i = 1; i < zone4N - 1; i++)
+            {
+                double u = (double)i / (zone4N - 1);
+                Donut(tr, ms, layer,
+                    b2PairX + ((bendPairX - b2PairX) * u),
+                    b2PairY + ((bendPairY - b2PairY) * u), o);
+            }
+
+            Donut(tr, ms, layer, bendPairX, bendPairY, o);
+
+            double extX = g.BarX(g.LandingSoffitY, g.Waist - cover) - (off * g.Riser / g.StepLength);
+            double extY = g.LandingSoffitY + (off * g.Tread / g.StepLength);
+
+            double extDist = Math.Sqrt(
+                ((extX - bendPairX) * (extX - bendPairX)) +
+                ((extY - bendPairY) * (extY - bendPairY)));
+            int extN = Math.Max(2, (int)Math.Ceiling(extDist / p.DonutSpacing) + 1);
+
+            for (int i = 1; i < extN - 1; i++)
+            {
+                double u = (double)i / (extN - 1);
+                Donut(tr, ms, layer,
+                    bendPairX + ((extX - bendPairX) * u),
+                    bendPairY + ((extY - bendPairY) * u), o);
+            }
+
+            Donut(tr, ms, layer, extX, extY, o);
         }
 
         static void Donut(Transaction tr, BlockTableRecord ms, ObjectId layer, double x, double y, Point2d o)
